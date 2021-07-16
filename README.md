@@ -25,6 +25,14 @@ I wanted a tool that allows to:
 
 - Download the required package from the releases page
 - Extract the package and run the application
+- MacOS
+    - Copy the application to the applications folder
+    - On the frist run need to allow the app to run and make network connections
+- Linux 
+    - Run the command `sudo make install` to install the application
+    - Run the command `sudo make uninstall` to remove the application
+- Windows
+    - *TODO*
 
 ## Usage
 
