@@ -1,5 +1,5 @@
 #VERSION = $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || echo v0)
-VERSION = $(shell git describe --tags --match=v* 2> /dev/null || echo 0.0.0)
+VERSION = $(shell git describe --tags --match=v* 2> /dev/null || echo 0.1.0)
 
 APPID = com.github.fabiodcorreia.catch-my-file
 ICON = assets/icons/icon-512.png
@@ -37,27 +37,27 @@ darwin:
 	fyne-cross darwin -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 	
 linux:
-	fyne-cross linux -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION)
+	fyne-cross linux -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 
 windows:
-	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION)
+	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 
 bundle:
 	rm -fr dist
 	mkdir dist
 
-	mv fyne-cross/dist/linux-amd64/$(NAME).tar.gz $(NAME)-$(VERSION)-linux-amd64.tar.gz
-	mv fyne-cross/dist/linux-arm64/$(NAME).tar.gz $(NAME)-$(VERSION)-linux-arm64.tar.gz
+	mv fyne-cross/dist/linux-amd64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-amd64.tar.gz
+	mv fyne-cross/dist/linux-arm64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-arm64.tar.gz
 
 	(cd fyne-cross/dist/darwin-amd64/ && zip -r $(NAME)-darwin-amd64.zip $(NAME).app/)
 	mv fyne-cross/dist/darwin-amd64/$(NAME)-darwin-amd64.zip dist/$(NAME)-$(VERSION)-darwin-amd64.zip
 
-	(cd fyne-cross/dist/darwin-arm64/ && zip -r $(NAME)-darwin-arm64.zip $(NAME).app/)
-	mv fyne-cross/dist/darwin-arm64/$(NAME)-darwin-arm64.zip dist/$(NAME)-$(VERSION)-darwin-arm64.zip
+	#(cd fyne-cross/dist/darwin-arm64/ && zip -r $(NAME)-darwin-arm64.zip $(NAME).app/)
+	#mv fyne-cross/dist/darwin-arm64/$(NAME)-darwin-arm64.zip dist/$(NAME)-$(VERSION)-darwin-arm64.zip
 
-	mv fyne-cross/dist/windows-amd64/$(NAME).exe.zip $(NAME)-$(VERSION)-windows-amd64.zip
+	mv fyne-cross/dist/windows-amd64/$(NAME).zip dist/$(NAME)-$(VERSION)-windows-amd64.zip
 
-release: darwin freebsd linux windows bundle
+release: darwin linux windows bundle
 
 tools:
 	go get -u github.com/jgautheron/goconst/cmd/goconst
