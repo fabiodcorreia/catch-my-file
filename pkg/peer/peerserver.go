@@ -20,7 +20,7 @@ type Server struct {
 // NewServer will create a new peer discover server.
 //
 // The port is the port number used for the TCP connections
-// from where the files will be transfered.
+// from where the files will be transferred.
 func NewServer(name string, port int) *Server {
 	return &Server{
 		name: name,
@@ -59,8 +59,9 @@ func (s *Server) Run(ctx context.Context, peers chan Peer) error {
 	}
 
 	entries := make(chan *zeroconf.ServiceEntry)
-	err = resolver.Browse(ctx, serviceName, serviceDomain, entries)
-	if err != nil {
+
+	if err := resolver.Browse(ctx, serviceName, serviceDomain, entries); err != nil {
+		close(entries)
 		return fmt.Errorf("peer server fail to discover: %v", err)
 	}
 

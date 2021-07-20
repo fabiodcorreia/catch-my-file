@@ -1,8 +1,8 @@
-// Peer package is containes all the componets related with the network peers.
+// Peer package is contains all the componets related with the network peers.
 //
 // Components:
 //
-// - peerserver.go -> Registration and peer discovery
+// - peerserver -> Registration and peer discovery
 //
 package peer
 
@@ -32,7 +32,7 @@ type Peer struct {
 // the port where the peer will receive connections for file transfers.
 func newPeer(name string, address net.IP, port int) Peer {
 	return Peer{
-		Name:    strings.Replace(name, ".local.", "", 1),
+		Name:    strings.Replace(name, `.local.`, ``, 1),
 		Address: address,
 		Port:    port,
 	}

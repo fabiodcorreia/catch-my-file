@@ -5,62 +5,73 @@ APPID = com.github.fabiodcorreia.catch-my-file
 ICON = assets/icons/icon-512.png
 NAME = CatchMyFile
 
+TARGET = pkg/**/*.go
+
 format:
-	gofmt -s -w main.go 
-	gofmt -s -w internal/**/*.go 
-	gofmt -s -w cmd/**/*.go
+	@gofmt -s -w $(TARGET)
 
 review: format
 	@echo "============= Spell Check ============= "
 	@misspell .
 	
 	@echo "============= Ineffectual Assignments Check ============= "
-	@ineffassign ./...
+	@ineffassign $(TARGET)
 
 	@echo "============= Cyclomatic Complexity Check ============= "
-	@gocyclo -total -over 5 -avg .
+	@gocyclo -total -over 5 -avg $(TARGET)
 
 	@echo "============= Duplication Check ============= "
-	@dupl -t 25
+	@dupl -t 15 $(TARGET)
 
 	@echo "============= Repeated Strings Check ============= "
-	@goconst ./...
+	@goconst $(TARGET)
+
+	@echo "============= Security Check ============= "
+	@gosec ./...
 
 	@echo "============= Vet Check ============= "
-	@go vet ./...
+	@go vet --all .
+
+	@echo "============= Preallocation Check ============= "
+	@prealloc -forloops -set_exit_status -simple -rangeloops ./...
+
+	@echo "============= Shadow Variables Check ============= "
+	@shadow -strict ./...
 	
-build:
+pre-build: review
 	go mod tidy
+
+build: pre-build
 	go build -tags release -ldflags="-s -w"  -o $(NAME)
 
-darwin:
+darwin: pre-build
 	fyne-cross darwin -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 	
-linux:
+linux: pre-build
 	fyne-cross linux -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 
-windows:
+windows: pre-build
 	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 
-bundle:
-	rm -fr dist
-	mkdir dist
-
+bundle-linux: linux
 	mv fyne-cross/dist/linux-amd64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-amd64.tar.gz
 	mv fyne-cross/dist/linux-arm64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-arm64.tar.gz
 
+bundle-darwin: darwin
 	(cd fyne-cross/dist/darwin-amd64/ && zip -r $(NAME)-darwin-amd64.zip $(NAME).app/)
 	mv fyne-cross/dist/darwin-amd64/$(NAME)-darwin-amd64.zip dist/$(NAME)-$(VERSION)-darwin-amd64.zip
 
 	#(cd fyne-cross/dist/darwin-arm64/ && zip -r $(NAME)-darwin-arm64.zip $(NAME).app/)
 	#mv fyne-cross/dist/darwin-arm64/$(NAME)-darwin-arm64.zip dist/$(NAME)-$(VERSION)-darwin-arm64.zip
 
+bundle-windows: windows
 	mv fyne-cross/dist/windows-amd64/$(NAME).zip dist/$(NAME)-$(VERSION)-windows-amd64.zip
 
-release: darwin linux windows bundle
+release: bundle-linux bundle-darwin bundle-windows
 
 tools:
 	go get -u github.com/jgautheron/goconst/cmd/goconst
 	go get -u github.com/mdempsky/unconvert
 	go get -u github.com/securego/gosec/v2/cmd/gosec
 	go get -u github.com/alexkohler/prealloc
+	go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow@latest
