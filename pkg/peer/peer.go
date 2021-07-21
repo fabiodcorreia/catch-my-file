@@ -1,13 +1,11 @@
-// Peer package is contains all the componets related with the network peers.
-//
-// Components:
-//
-// - peerserver -> Registration and peer discovery
-//
 package peer
 
 import (
+	"context"
 	"net"
+
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 )
 
 const (
@@ -29,10 +27,33 @@ type Peer struct {
 //
 // It receives a string with the name of the peer, the ip address and
 // the port where the peer will receive connections for file transfers.
-func newPeer(name string, address net.IP, port int) Peer {
-	return Peer{
+func newPeer(name string, address net.IP, port int) *Peer {
+	return &Peer{
 		Name:    name,
 		Address: address,
 		Port:    port,
 	}
+}
+
+type PeerController struct {
+	store  *PeerStore
+	server *PeerServer
+	view   *PeerList
+}
+
+func New(hostname string, port int) *PeerController {
+	s := newStore()
+	return &PeerController{
+		store:  s,
+		server: newServer(hostname, port, s),
+		view:   newListView(s),
+	}
+}
+
+func (c *PeerController) View() *container.TabItem {
+	return container.NewTabItemWithIcon("Peers", theme.ComputerIcon(), c.view)
+}
+
+func (c *PeerController) Start(ctx context.Context, done chan<- interface{}) error {
+	return c.server.Run(ctx, done)
 }
