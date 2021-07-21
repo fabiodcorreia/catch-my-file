@@ -8,7 +8,6 @@ package peer
 
 import (
 	"net"
-	"strings"
 )
 
 const (
@@ -32,7 +31,7 @@ type Peer struct {
 // the port where the peer will receive connections for file transfers.
 func newPeer(name string, address net.IP, port int) Peer {
 	return Peer{
-		Name:    strings.Replace(name, `.local.`, ``, 1),
+		Name:    name,
 		Address: address,
 		Port:    port,
 	}

@@ -3,6 +3,7 @@ package peer
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/grandcat/zeroconf"
 )
@@ -46,7 +47,7 @@ func NewServer(name string, port int) *Server {
 // - on start listening
 //
 // - on discover
-func (s *Server) Run(ctx context.Context, peers chan Peer) error {
+func (s *Server) Run(ctx context.Context, peers chan<- Peer) error {
 	instance := fmt.Sprintf("catch-%s", s.name)
 	sv, err := zeroconf.Register(instance, serviceName, serviceDomain, s.port, nil, nil)
 	if err != nil {
@@ -66,13 +67,22 @@ func (s *Server) Run(ctx context.Context, peers chan Peer) error {
 	}
 
 	go func(results <-chan *zeroconf.ServiceEntry) {
-		for entry := range results {
-			peers <- newPeer(entry.HostName, entry.AddrIPv4[0], entry.Port)
-		}
+		convEntry(results, peers)
 		sv.Shutdown()
 		close(s.Done)
+		close(peers)
 		// entries is already closed by the context cancelation
 	}(entries)
 
 	return nil
+}
+
+// convEntry will grab each entry received from results channel, convert it
+// into a Peer struct instance and send it to the peers channel.
+func convEntry(results <-chan *zeroconf.ServiceEntry, peers chan<- Peer) {
+	for entry := range results {
+		name := strings.Replace(entry.HostName, `.local.`, ``, 1)
+		ipAddr := entry.AddrIPv4[0] //TODO select the preferred IP address
+		peers <- newPeer(name, ipAddr, entry.Port)
+	}
 }
