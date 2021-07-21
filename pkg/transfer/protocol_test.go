@@ -278,6 +278,96 @@ func Test_readRequestMessage(t *testing.T) {
 	}
 }
 
+func Test_writeConfirmation(t *testing.T) {
+	type args struct {
+		accept bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantW   byte
+		wantErr bool
+	}{
+		{
+			name: "write confirmation accept",
+			args: args{
+				accept: true,
+			},
+			wantW:   1,
+			wantErr: false,
+		},
+		{
+			name: "write confirmation reject",
+			args: args{
+				accept: false,
+			},
+			wantW:   0,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := &bytes.Buffer{}
+			if err := writeConfirmation(tt.args.accept, w); (err != nil) != tt.wantErr {
+				t.Errorf("writeConfirmation() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotW := w.Bytes(); gotW[0] != tt.wantW {
+				t.Errorf("writeConfirmation() = %v, want %v", gotW, tt.wantW)
+			}
+		})
+	}
+}
+
+func Test_readConfirmation(t *testing.T) {
+	type args struct {
+		r io.Reader
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    bool
+		wantErr bool
+	}{
+		{
+			name: "read confirmation accept",
+			args: args{
+				r: bytes.NewBuffer([]byte{1}),
+			},
+			want:    true,
+			wantErr: false,
+		},
+		{
+			name: "read confirmation reject",
+			args: args{
+				r: bytes.NewBuffer([]byte{0}),
+			},
+			want:    false,
+			wantErr: false,
+		},
+		{
+			name: "reader is nil",
+			args: args{
+				r: nil,
+			},
+			want:    false,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := readConfirmation(tt.args.r)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("readConfirmation() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("readConfirmation() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func Benchmark_writeRequestMessage(b *testing.B) {
 	p := make([]byte, messageRequestLen)
 	buffer := bytes.NewBuffer(p)
@@ -310,15 +400,14 @@ func Benchmark_readRequestMessage(b *testing.B) {
 
 /*
 cpu: Intel(R) Core(TM) i7-8700B CPU @ 3.20GHz
-Benchmark_writeRequestMessage-12    	 3176440	       358.2 ns/op	    1038 B/op	       5 allocs/op
-Benchmark_writeRequestMessage-12    	 5904570	       336.2 ns/op	    1098 B/op	       5 allocs/op
-Benchmark_writeRequestMessage-12    	 5854117	       476.4 ns/op	    1105 B/op	       5 allocs/op
-Benchmark_writeRequestMessage-12    	 5284982	       210.0 ns/op	     726 B/op	       5 allocs/op
-Benchmark_writeRequestMessage-12    	 5807980	       249.4 ns/op	    1112 B/op	       5 allocs/op
-Benchmark_readRequestMessage-12     	 4979452	       241.8 ns/op	     288 B/op	       3 allocs/op
-Benchmark_readRequestMessage-12     	 4942868	       238.8 ns/op	     288 B/op	       3 allocs/op
-Benchmark_readRequestMessage-12     	 5021805	       238.6 ns/op	     288 B/op	       3 allocs/op
-Benchmark_readRequestMessage-12     	 5008231	       239.0 ns/op	     288 B/op	       3 allocs/op
-Benchmark_readRequestMessage-12     	 5013057	       238.8 ns/op	     288 B/op	       3 allocs/op
-
+Benchmark_writeRequestMessage-12    	 4034121	       259.2 ns/op	     742 B/op	       2 allocs/op
+Benchmark_writeRequestMessage-12    	 8149062	       247.2 ns/op	     737 B/op	       2 allocs/op
+Benchmark_writeRequestMessage-12    	 8138664	       174.6 ns/op	     738 B/op	       2 allocs/op
+Benchmark_writeRequestMessage-12    	 7951802	       144.2 ns/op	     749 B/op	       2 allocs/op
+Benchmark_writeRequestMessage-12    	 7992823	       146.1 ns/op	     747 B/op	       2 allocs/op
+Benchmark_readRequestMessage-12     	 4915308	       245.6 ns/op	     288 B/op	       3 allocs/op
+Benchmark_readRequestMessage-12     	 4416396	       246.3 ns/op	     288 B/op	       3 allocs/op
+Benchmark_readRequestMessage-12     	 4893675	       242.7 ns/op	     288 B/op	       3 allocs/op
+Benchmark_readRequestMessage-12     	 4817354	       244.8 ns/op	     288 B/op	       3 allocs/op
+Benchmark_readRequestMessage-12     	 4943056	       242.7 ns/op	     288 B/op	       3 allocs/op
 */

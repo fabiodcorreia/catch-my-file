@@ -70,20 +70,14 @@ func writeRequestMessage(m requestMessage, w io.Writer) error {
 		return fmt.Errorf("writing message request fail hostname field: %v", err)
 	}
 
-	if _, err := w.Write(check); err != nil {
-		return fmt.Errorf("writing message request field checksum writing error: %v", err)
-	}
+	p := make([]byte, messageRequestLen)
+	copy(p[:idxFieldChecksum], check)
+	copy(p[idxFieldChecksum:idxFieldFileSize], size)
+	copy(p[idxFieldFileSize:idxFieldFileName], name)
+	copy(p[idxFieldFileName:idxFieldHostname], host)
 
-	if _, err := w.Write(size); err != nil {
-		return fmt.Errorf("writing message request field file size writing error: %v", err)
-	}
-
-	if _, err := w.Write(name); err != nil {
-		return fmt.Errorf("writing message request field filen name writing error: %v", err)
-	}
-
-	if _, err := w.Write(host); err != nil {
-		return fmt.Errorf("writing message request field hostname writing error: %v", err)
+	if _, err := w.Write(p); err != nil {
+		return fmt.Errorf("writing message request error: %v", err)
 	}
 
 	return nil
@@ -149,4 +143,44 @@ func trimMessageField(field []byte) string {
 		}
 	}
 	return string(field)
+}
+
+// writeConfirmation will write one byte to the writer depending if the
+// accept argument is true or false.
+func writeConfirmation(accept bool, w io.Writer) error {
+	if w == nil {
+		return fmt.Errorf("write confirmation error: writeer is nil")
+	}
+
+	buffer := make([]byte, 1)
+	switch accept {
+	case true:
+		buffer[0] = 1
+	default:
+		buffer[0] = 0
+	}
+
+	if _, err := w.Write(buffer); err != nil {
+		return fmt.Errorf("write confirmation error: %v", err)
+	}
+
+	return nil
+}
+
+// readConfirmation will read one byte from the reader and return if
+// the request was accepted or not.
+func readConfirmation(r io.Reader) (bool, error) {
+	if r == nil {
+		return false, fmt.Errorf("read confirmation error: reader is nil")
+	}
+
+	buffer := make([]byte, 1)
+	if _, err := r.Read(buffer); err != nil {
+		return false, fmt.Errorf("read confirmation error: %v", err)
+	}
+
+	if buffer[0] == 1 {
+		return true, nil
+	}
+	return false, nil
 }
