@@ -145,9 +145,9 @@ func trimMessageField(field []byte) string {
 	return string(field)
 }
 
-// writeConfirmation will write one byte to the writer depending if the
+// writeDecision will write one byte to the writer depending if the
 // accept argument is true or false.
-func writeConfirmation(accept bool, w io.Writer) error {
+func writeDecision(accept bool, w io.Writer) error {
 	if w == nil {
 		return fmt.Errorf("write confirmation error: writeer is nil")
 	}
@@ -167,9 +167,9 @@ func writeConfirmation(accept bool, w io.Writer) error {
 	return nil
 }
 
-// readConfirmation will read one byte from the reader and return if
+// readDecision will read one byte from the reader and return if
 // the request was accepted or not.
-func readConfirmation(r io.Reader) (bool, error) {
+func readDecision(r io.Reader) (bool, error) {
 	if r == nil {
 		return false, fmt.Errorf("read confirmation error: reader is nil")
 	}

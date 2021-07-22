@@ -13,7 +13,7 @@ import (
 //
 // Done is a channel that is closed when the Server finish the execution.
 type Server struct {
-	Done chan interface{}
+	Done chan<- interface{}
 	name string
 	port int
 }

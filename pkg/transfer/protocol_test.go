@@ -278,7 +278,7 @@ func Test_readRequestMessage(t *testing.T) {
 	}
 }
 
-func Test_writeConfirmation(t *testing.T) {
+func Test_writeDecision(t *testing.T) {
 	type args struct {
 		accept bool
 	}
@@ -308,7 +308,7 @@ func Test_writeConfirmation(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			w := &bytes.Buffer{}
-			if err := writeConfirmation(tt.args.accept, w); (err != nil) != tt.wantErr {
+			if err := writeDecision(tt.args.accept, w); (err != nil) != tt.wantErr {
 				t.Errorf("writeConfirmation() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
@@ -319,7 +319,7 @@ func Test_writeConfirmation(t *testing.T) {
 	}
 }
 
-func Test_readConfirmation(t *testing.T) {
+func Test_readDecision(t *testing.T) {
 	type args struct {
 		r io.Reader
 	}
@@ -356,7 +356,7 @@ func Test_readConfirmation(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := readConfirmation(tt.args.r)
+			got, err := readDecision(tt.args.r)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("readConfirmation() error = %v, wantErr %v", err, tt.wantErr)
 				return
