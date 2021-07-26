@@ -12,42 +12,29 @@ import (
 // It wrappes the logic for zeroconf.
 //
 // Done is a channel that is closed when the Server finish the execution.
-type Server struct {
-	Done chan<- interface{}
-	name string
-	port int
+type PeerServer struct {
+	name  string
+	port  int
+	store *PeerStore
 }
 
 // NewServer will create a new peer discover server.
 //
 // The port is the port number used for the TCP connections
 // from where the files will be transferred.
-func NewServer(name string, port int) *Server {
-	return &Server{
-		name: name,
-		port: port,
-		Done: make(chan interface{}),
+func newServer(name string, port int, store *PeerStore) *PeerServer {
+	return &PeerServer{
+		name:  name,
+		port:  port,
+		store: store,
 	}
 }
 
 // Run will start the Server that will register the peer and start looking for
 // peers on the local network with zeroconf.
 //
-// Arguments:
-//
-// - ctx is a context with cancel, what will be used to terminate the server.
-//
-// - peers is a channel of Peer that will stream each peer discovered on the
-// network.
-//
-// Errors:
-//
-// - on registering the service
-//
-// - on start listening
-//
-// - on discover
-func (s *Server) Run(ctx context.Context, peers chan<- Peer) error {
+// Each peer that is dicovered will be added to the peer store.
+func (s *PeerServer) Run(ctx context.Context, done chan<- interface{}) error {
 	instance := fmt.Sprintf("catch-%s", s.name)
 	sv, err := zeroconf.Register(instance, serviceName, serviceDomain, s.port, nil, nil)
 	if err != nil {
@@ -67,22 +54,20 @@ func (s *Server) Run(ctx context.Context, peers chan<- Peer) error {
 	}
 
 	go func(results <-chan *zeroconf.ServiceEntry) {
-		convEntry(results, peers)
+		convEntry(results, s.store)
 		sv.Shutdown()
-		close(s.Done)
-		close(peers)
-		// entries is already closed by the context cancelation
+		close(done)
 	}(entries)
 
 	return nil
 }
 
 // convEntry will grab each entry received from results channel, convert it
-// into a Peer struct instance and send it to the peers channel.
-func convEntry(results <-chan *zeroconf.ServiceEntry, peers chan<- Peer) {
+// into a Peer instance and add it to the store.
+func convEntry(results <-chan *zeroconf.ServiceEntry, store *PeerStore) {
 	for entry := range results {
 		name := strings.Replace(entry.HostName, `.local.`, ``, 1)
 		ipAddr := entry.AddrIPv4[0] //TODO select the preferred IP address
-		peers <- newPeer(name, ipAddr, entry.Port)
+		store.Add(newPeer(name, ipAddr, entry.Port))
 	}
 }
