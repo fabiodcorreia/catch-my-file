@@ -17,7 +17,7 @@ const transferChunkSize = 65536 //64kb
 
 // OnProgressChange represents a callback to be executed when the file.Stream
 // reports progress.
-type OnProgressChange func(transfered int)
+type OnProgressChange func(transferred int)
 
 // Stream will copy the in content to the out.
 //
@@ -25,9 +25,9 @@ type OnProgressChange func(transfered int)
 // will be interrupted.
 //
 // The optional argument onProg is callback function that is executed everytime
-// a new chuck of data is transfered with success. If not needed nil can be sent.
+// a new chuck of data is transferred with success. If not needed nil can be sent.
 //
-// At the end it will return the total of bytes transfered and an error if any.
+// At the end it will return the total of bytes transferred and an error if any.
 // If there is an error, it can be because the context got interrupted, an
 // error reading the input content or writing to the output.
 func Stream(ctx context.Context, in io.Reader, out io.Writer, onProg OnProgressChange) (int, error) {
