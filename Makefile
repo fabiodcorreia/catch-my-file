@@ -7,6 +7,8 @@ NAME = CatchMyFile
 
 TARGET = pkg/**/*.go
 
+#@dupl -t 30 $(TARGET)
+
 format:
 	@gofmt -s -w $(TARGET)
 
@@ -15,13 +17,10 @@ review: format
 	@misspell .
 	
 	@echo "============= Ineffectual Assignments Check ============= "
-	@ineffassign $(TARGET)
-
-	@echo "============= Cyclomatic Complexity Check ============= "
-	@gocyclo -total -over 5 -avg $(TARGET)
+	@ineffassign ./...
 
 	@echo "============= Duplication Check ============= "
-	@dupl -t 15 $(TARGET)
+	find ./pkg -not -name '*_test.go' -name '*.go' | dupl -t 30 -files
 
 	@echo "============= Repeated Strings Check ============= "
 	@goconst $(TARGET)
@@ -37,7 +36,25 @@ review: format
 
 	@echo "============= Shadow Variables Check ============= "
 	@shadow -strict ./...
+
+	@echo "============= Cyclomatic Complexity Check ============= "
+	@gocyclo -total -ignore "_test" -over 8 -avg $(TARGET)
 	
+test: 
+	@go test -cover ./pkg/...
+
+cover: 
+	@go test -coverprofile=coverage.out ./pkg/...
+	@go tool cover -func=coverage.out
+
+cover-html: 
+	@go test -coverprofile=coverage.out ./pkg/...
+	@go tool cover -html=coverage.out
+
+
+bench:
+	go test -benchtime=1s -count=5 -benchmem -bench . ./pkg/...
+
 pre-build: review
 	go mod tidy
 

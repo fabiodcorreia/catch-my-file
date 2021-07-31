@@ -4,69 +4,66 @@ import (
 	"sync"
 )
 
+// OnPeerStoreChange is a function that is executed everytime a
+// peer is added to the store.
 type OnPeerStoreChange func(i int)
 
+// PeerStore is a thread-safe store that allows to store and retrieve
+// peers and also get notification when the content of the store changes.
 type PeerStore struct {
-	mu      sync.Mutex
-	data    []*Peer
-	actions []OnPeerStoreChange
+	OnPeerStoreChange
+	mu   sync.Mutex
+	data []*Peer
 }
 
-// NewPeerStore will create a new instance of PeerStore which is thread-safe.
-func newStore() *PeerStore {
+// NewStore create a new instance of PeerStore.
+func NewStore() *PeerStore {
 	return &PeerStore{
-		data:    make([]*Peer, 0, 3),
-		actions: make([]OnPeerStoreChange, 0),
+		data: make([]*Peer, 0, 3),
 	}
 }
 
-// Get will return a peer by the position i on the store.
+// Get return a peer from the specified index.
+//
+// If the index doesn't exists returns nil.
 func (s *PeerStore) Get(i int) *Peer {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+
+	if i >= len(s.data) {
+		return nil
+	}
+
 	return s.data[i]
 }
 
-// Add will add a peer to the store.
-func (s *PeerStore) Add(p *Peer) {
-	s.mu.Lock()
-	s.data = append(s.data, p)
+// Add will append a peer to the existing list of peers.
+//
+// It returns the index where the peer whas stored.
+//
+// After the peer gets added the function OnPeerStoreChanged is executed.
+func (s *PeerStore) Add(p *Peer) int {
+	i := s.add(p)
 
-	s.mu.Unlock()
-	s.fireChange(len(s.data) - 1)
+	if s.OnPeerStoreChange != nil {
+		s.OnPeerStoreChange(i)
+	}
 
+	return i
 }
 
-// Remove will remove a peer by position i on the store.
-func (s *PeerStore) Remove(i int) {
-	s.mu.Lock()
-	copy(s.data[i:], s.data[i+1:])
-	s.data[s.Size()-1] = nil
-	s.data = s.data[:len(s.data)-1]
-
-	s.mu.Unlock()
-	s.fireChange(i)
-}
-
-// Size will return the current number of elements on the store.
+// Size returns the length of the store.
 func (s *PeerStore) Size() int {
 	return len(s.data)
 }
 
-// addOnChangeListener will add a new OnPeerStoreChange function that
-// will be executed everytime the store content changes.
-func (s *PeerStore) AddOnChangeListener(action OnPeerStoreChange) {
+// add will append a peer to the store using a mutext safe guard.
+//
+// Returns the index where the peer was stored.
+func (s *PeerStore) add(p *Peer) int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.actions = append(s.actions, action)
-}
-
-// fireChange will execute each OnPeerStoreChange function registred
-func (s *PeerStore) fireChange(i int) {
-	if len(s.actions) > 0 {
-		for _, af := range s.actions {
-			af(i)
-		}
-	}
+	s.data = append(s.data, p)
+	return len(s.data) - 1
 }

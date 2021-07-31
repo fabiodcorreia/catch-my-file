@@ -3,13 +3,16 @@ package peer
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
+	"github.com/fabiodcorreia/catch-my-file/pkg/layout"
 )
 
-type peerListLayout struct {
+type peerLayout struct {
 	maxMinSizeHeight float32
 }
 
-func (l *peerListLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+// Layout will calculate the size and position of each object in a row
+// of the Peers List.
+func (l *peerLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	col1Width := size.Width * 0.60
 	col1X := theme.Padding()
 
@@ -19,24 +22,14 @@ func (l *peerListLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	col3Width := float32(40)
 	col3X := size.Width - theme.Padding() - col3Width
 
-	l.resizeAndMove(objects[0], col1Width, col1X)
-	l.resizeAndMove(objects[1], col2Width, col2X)
-	l.resizeAndMove(objects[2], col3Width, col3X)
+	layout.ResizeAndMove(objects[0], col1Width, col1X, l.maxMinSizeHeight)
+	layout.ResizeAndMove(objects[1], col2Width, col2X, l.maxMinSizeHeight)
+	layout.ResizeAndMove(objects[2], col3Width, col3X, l.maxMinSizeHeight)
 }
 
-func (l *peerListLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	var maxMinSizeWidth float32
-	for _, child := range objects {
-		if child.Visible() {
-			maxMinSizeWidth += child.MinSize().Width
-			l.maxMinSizeHeight = fyne.Max(child.MinSize().Height, l.maxMinSizeHeight)
-		}
-	}
-
-	return fyne.NewSize(maxMinSizeWidth, l.maxMinSizeHeight)
-}
-
-func (l *peerListLayout) resizeAndMove(obj fyne.CanvasObject, width float32, posX float32) {
-	obj.Resize(fyne.NewSize(width, l.maxMinSizeHeight))
-	obj.Move(fyne.NewPos(posX, 0))
+// MinSize will calculate the minimum size allowed that
+func (l *peerLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+	size, height := layout.MinSize(l.maxMinSizeHeight, objects)
+	l.maxMinSizeHeight = height
+	return size
 }

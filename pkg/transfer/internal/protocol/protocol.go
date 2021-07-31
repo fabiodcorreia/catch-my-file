@@ -9,7 +9,7 @@ import (
 // The length of each message field in bytes.
 const (
 	fieldChecksumLen = 64
-	fieldFileSizeLen = 10
+	fieldFileSizeLen = 13 // Up to 9TB
 	fieldFileNameLen = 128
 	fieldHostnameLen = 32
 )
@@ -44,7 +44,7 @@ type RequestMessage struct {
 // provided for each field is not valid or an error writing to the output.
 func WriteRequestMessage(m RequestMessage, out io.Writer) error {
 	if out == nil {
-		return fmt.Errorf("protocol write request message error: writer is nil")
+		return fmt.Errorf("protocol write request message error: output writer is nil")
 	}
 
 	check := make([]byte, fieldChecksumLen)
@@ -92,7 +92,11 @@ func ReadRequestMessage(m *RequestMessage, in io.Reader) error {
 	bufferMessage := make([]byte, messageRequestLen)
 
 	if in == nil {
-		return fmt.Errorf("protocol read request message error: reader is nil")
+		return fmt.Errorf("protocol read request message error: input reader is nil")
+	}
+
+	if m == nil {
+		return fmt.Errorf("protocol read request message error: request message is nil")
 	}
 
 	rc, err := in.Read(bufferMessage)
@@ -120,32 +124,6 @@ func ReadRequestMessage(m *RequestMessage, in io.Reader) error {
 	return nil
 }
 
-// fillMessageField will receive a content string and convert it into a []byte
-// filling the remaining positions of the []byte length with 0 value bytes.
-//
-// If the length of the content is larger than then length of the buffer an erro is returned.
-func fillMessageField(content string, buffer []byte) error {
-	if len(content) > len(buffer) {
-		return fmt.Errorf("only allowed %d characteres but found %d", len(buffer), len(content))
-	}
-
-	copy(buffer, content)
-	return nil
-}
-
-// trimMessageField will look for the first 0 byte value on the field content
-// and return a string with the field content before the 0 byte value.
-//
-// This will remove the extra 0 bytes used to fill the message field.
-func trimMessageField(field []byte) string {
-	for i := range field {
-		if field[i] == 0 {
-			return string(field[:i])
-		}
-	}
-	return string(field)
-}
-
 // WriteDecision will write one byte to the writer depending if the
 // accept argument is true or false.
 //
@@ -153,7 +131,7 @@ func trimMessageField(field []byte) string {
 // and error occurred writing to the output.
 func WriteDecision(accept bool, out io.Writer) error {
 	if out == nil {
-		return fmt.Errorf("protocol write decision error: output is nil")
+		return fmt.Errorf("protocol write decision error: output writer is nil")
 	}
 
 	buffer := make([]byte, 1)
@@ -178,7 +156,7 @@ func WriteDecision(accept bool, out io.Writer) error {
 // and error occurred reading the input.
 func ReadDecision(in io.Reader) (bool, error) {
 	if in == nil {
-		return false, fmt.Errorf("protocol read decision error: reader is nil")
+		return false, fmt.Errorf("protocol read decision error: input reader is nil")
 	}
 
 	buffer := make([]byte, 1)
@@ -190,4 +168,30 @@ func ReadDecision(in io.Reader) (bool, error) {
 		return true, nil
 	}
 	return false, nil
+}
+
+// fillMessageField will receive a content string and convert it into a []byte
+// filling the remaining positions of the []byte length with 0 value bytes.
+//
+// If the length of the content is larger than then length of the buffer an erro is returned.
+func fillMessageField(content string, buffer []byte) error {
+	if len(content) > len(buffer) {
+		return fmt.Errorf("only allowed %d characteres but found %d", len(buffer), len(content))
+	}
+
+	copy(buffer, content)
+	return nil
+}
+
+// trimMessageField will look for the first 0 byte value on the field content
+// and return a string with the field content before the 0 byte value.
+//
+// This will remove the extra 0 bytes used to fill the message field.
+func trimMessageField(field []byte) string {
+	for i := range field {
+		if field[i] == 0 {
+			return string(field[:i])
+		}
+	}
+	return string(field)
 }

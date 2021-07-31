@@ -7,8 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-
-	"github.com/fabiodcorreia/catch-my-file/pkg/clog"
 )
 
 // transferChunkSize is the number of bytes send on each write/read operation
@@ -31,6 +29,14 @@ type OnProgressChange func(transferred int)
 // If there is an error, it can be because the context got interrupted, an
 // error reading the input content or writing to the output.
 func Stream(ctx context.Context, in io.Reader, out io.Writer, onProg OnProgressChange) (int, error) {
+	if in == nil {
+		return -1, fmt.Errorf("file stream error: input reader is nil")
+	}
+
+	if out == nil {
+		return -1, fmt.Errorf("file stream error: output writer is nil")
+	}
+
 	var transferred int
 	buf := make([]byte, transferChunkSize)
 	for {
@@ -51,6 +57,7 @@ func Stream(ctx context.Context, in io.Reader, out io.Writer, onProg OnProgressC
 		if err != nil {
 			return -1, fmt.Errorf("file stream error write file: %v", err)
 		}
+
 		transferred += wc
 		if onProg != nil {
 			onProg(transferred)
@@ -87,23 +94,30 @@ func Lookup(fileFullPath string) (string, int64, error) {
 //
 // If there is an error, it can be because there was an error opening the file
 // or an error on streaming the file content to the hash.
-func Checksum(ctx context.Context, fileFullPath string) (string, error) {
-	f, err := os.OpenFile(filepath.Clean(fileFullPath), os.O_RDONLY, os.ModePerm)
-	if err != nil {
-		return "", fmt.Errorf("file checksum error opening file: %v", err)
+func Checksum(ctx context.Context, in io.Reader) (string, error) {
+	if in == nil {
+		return "", fmt.Errorf("file checksum error: input reader is nil")
 	}
-
-	defer func() {
-		if cErr := f.Close(); cErr != nil {
-			clog.Error(cErr)
-		}
-	}()
 
 	hash := sha256.New()
 
-	if _, err = Stream(ctx, f, hash, nil); err != nil {
+	if _, err := Stream(ctx, in, hash, nil); err != nil {
 		return "", fmt.Errorf("file checksum error getting file content: %v", err)
 	}
 
 	return fmt.Sprintf("%x", hash.Sum(nil)), nil
+}
+
+const (
+	OPEN_READ  = true
+	OPEN_WRITE = false
+)
+
+// Open is just a wrapper around os.OpenFile to insure the
+// filepath clean and the READONLY or WRITEONLY mode.
+func Open(fileFullPath string, isRead bool) (*os.File, error) {
+	if isRead {
+		return os.OpenFile(filepath.Clean(fileFullPath), os.O_RDONLY, os.ModePerm)
+	}
+	return os.OpenFile(filepath.Clean(fileFullPath), os.O_WRONLY, os.ModePerm)
 }
