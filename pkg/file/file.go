@@ -29,6 +29,7 @@ type OnProgressChange func(transferred int)
 // If there is an error, it can be because the context got interrupted, an
 // error reading the input content or writing to the output.
 func Stream(ctx context.Context, in io.Reader, out io.Writer, onProg OnProgressChange) (int, error) {
+
 	if in == nil {
 		return -1, fmt.Errorf("file stream error: input reader is nil")
 	}
@@ -102,6 +103,7 @@ func Checksum(ctx context.Context, in io.Reader) (string, error) {
 	hash := sha256.New()
 
 	if _, err := Stream(ctx, in, hash, nil); err != nil {
+
 		return "", fmt.Errorf("file checksum error getting file content: %v", err)
 	}
 

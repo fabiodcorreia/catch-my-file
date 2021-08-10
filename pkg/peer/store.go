@@ -53,6 +53,7 @@ func (s *PeerStore) Add(p *Peer) int {
 }
 
 // Size returns the length of the store.
+
 func (s *PeerStore) Size() int {
 	return len(s.data)
 }
@@ -66,4 +67,5 @@ func (s *PeerStore) add(p *Peer) int {
 
 	s.data = append(s.data, p)
 	return len(s.data) - 1
+
 }

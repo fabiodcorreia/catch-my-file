@@ -13,6 +13,7 @@ type peerLayout struct {
 // Layout will calculate the size and position of each object in a row
 // of the Peers List.
 func (l *peerLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+
 	col1Width := size.Width * 0.60
 	col1X := theme.Padding()
 
