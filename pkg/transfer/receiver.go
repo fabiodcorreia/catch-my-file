@@ -128,7 +128,11 @@ func handleRequest(ctx context.Context, conn net.Conn, store *TransferStore) {
 	trans.Status = Verifying
 	store.Update(id, trans)
 
-	f, err := file.Open(trans.LocalFilePath, file.OPEN_READ)
+	verifyFile(ctx, trans, rcvSize, id, store)
+}
+
+func verifyFile(ctx context.Context, t *Transfer, rcvSize, id int, store *TransferStore) {
+	f, err := file.Open(t.LocalFilePath, file.OPEN_READ)
 	if err != nil {
 		clog.Error(err)
 	}
@@ -139,13 +143,13 @@ func handleRequest(ctx context.Context, conn net.Conn, store *TransferStore) {
 		}
 	}()
 
-	if err = verifyTransfer(ctx, trans, rcvSize, f); err != nil {
-		trans.SetError(err)
+	if err = verifyTransfer(ctx, t, rcvSize, f); err != nil {
+		t.SetError(err)
 	} else {
-		trans.Status = Completed
+		t.Status = Completed
 	}
 
-	store.Update(id, trans)
+	store.Update(id, t)
 }
 
 // reqDecisionAndWait will add the transfer to the store and wait for confirmation

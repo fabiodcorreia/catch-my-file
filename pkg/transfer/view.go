@@ -122,7 +122,7 @@ func (tl *TransferList) updateItem(i widget.ListItemID, item fyne.CanvasObject) 
 	if t.Status == Error && t.Error() != nil {
 		dialog.ShowError(t.Error(), tl.Parent)
 
-		//! Realy don't like this
+		//! Really don't like this
 		go func() {
 			t.err = nil
 			tl.store.Update(i, t)

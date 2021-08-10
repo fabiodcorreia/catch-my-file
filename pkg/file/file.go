@@ -38,6 +38,10 @@ func Stream(ctx context.Context, in io.Reader, out io.Writer, onProg OnProgressC
 		return -1, fmt.Errorf("file stream error: output writer is nil")
 	}
 
+	return stream(ctx, in, out, onProg)
+}
+
+func stream(ctx context.Context, in io.Reader, out io.Writer, onProg OnProgressChange) (int, error) {
 	var transferred int
 	buf := make([]byte, transferChunkSize)
 	for {

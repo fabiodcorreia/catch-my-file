@@ -7,8 +7,6 @@ NAME = CatchMyFile
 
 TARGET = pkg/**/*.go
 
-#@dupl -t 30 $(TARGET)
-
 format:
 	@gofmt -s -w $(TARGET)
 
