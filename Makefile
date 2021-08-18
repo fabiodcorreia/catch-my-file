@@ -1,4 +1,4 @@
-VERSION = $(shell git describe --tags --match=v* 2> /dev/null || echo 0.0.0)
+VERSION = $(shell git describe --tags --match="[0-9]\.[0-9]\.[0-9]" 2> /dev/null || echo 0.0.0)
 
 APPID = com.github.fabiodcorreia.catch-my-file
 ICON = assets/icons/icon-512.png
@@ -62,7 +62,7 @@ darwin: pre-build
 	fyne-cross darwin -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 	
 linux: pre-build
-	fyne-cross linux -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
+	fyne-cross linux -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output catch-my-file
 
 windows: pre-build
 	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output "$(NAME).exe"
@@ -70,10 +70,12 @@ windows: pre-build
 build-all: pre-build darwin linux windows
 
 bundle-linux: linux
-	mv fyne-cross/dist/linux-amd64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-amd64.tar.gz
-	mv fyne-cross/dist/linux-arm64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-arm64.tar.gz
+	mkdir -p ./dist
+	mv fyne-cross/dist/linux-amd64/catch-my-file.tar.gz dist/$(NAME)-$(VERSION)-linux-amd64.tar.gz
+	mv fyne-cross/dist/linux-arm64/catch-my-file.tar.gz dist/$(NAME)-$(VERSION)-linux-arm64.tar.gz
 
 bundle-darwin: darwin
+	mkdir -p ./dist
 	(cd fyne-cross/dist/darwin-amd64/ && zip -r $(NAME)-darwin-amd64.zip $(NAME).app/)
 	mv fyne-cross/dist/darwin-amd64/$(NAME)-darwin-amd64.zip dist/$(NAME)-$(VERSION)-darwin-amd64.zip
 
@@ -81,7 +83,8 @@ bundle-darwin: darwin
 	#mv fyne-cross/dist/darwin-arm64/$(NAME)-darwin-arm64.zip dist/$(NAME)-$(VERSION)-darwin-arm64.zip
 
 bundle-windows: windows
-	mv fyne-cross/dist/windows-amd64/$(NAME).zip dist/$(NAME)-$(VERSION)-windows-amd64.zip
+	mkdir -p ./dist
+	mv fyne-cross/dist/windows-amd64/$(NAME).exe.zip dist/$(NAME)-$(VERSION)-windows-amd64.zip
 
 release: bundle-linux bundle-darwin bundle-windows
 
