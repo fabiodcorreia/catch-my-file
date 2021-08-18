@@ -1,5 +1,4 @@
-#VERSION = $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || echo v0)
-VERSION = $(shell git describe --tags --match=v* 2> /dev/null || echo 0.1.0)
+VERSION = $(shell git describe --tags --match=v* 2> /dev/null || echo 0.0.0)
 
 APPID = com.github.fabiodcorreia.catch-my-file
 ICON = assets/icons/icon-512.png
@@ -15,13 +14,10 @@ review: format
 	@misspell .
 	
 	@echo "============= Ineffectual Assignments Check ============= "
-	@ineffassign $(TARGET)
-
-	@echo "============= Cyclomatic Complexity Check ============= "
-	@gocyclo -total -over 5 -avg $(TARGET)
+	@ineffassign ./...
 
 	@echo "============= Duplication Check ============= "
-	@dupl -t 15 $(TARGET)
+	find ./pkg -not -name '*_test.go' -name '*.go' | dupl -t 30 -files
 
 	@echo "============= Repeated Strings Check ============= "
 	@goconst $(TARGET)
@@ -37,8 +33,26 @@ review: format
 
 	@echo "============= Shadow Variables Check ============= "
 	@shadow -strict ./...
+
+	@echo "============= Cyclomatic Complexity Check ============= "
+	@gocyclo -total -ignore "_test" -over 8 -avg $(TARGET)
 	
-pre-build: review
+test: 
+	@go test -cover ./pkg/...
+
+cover: 
+	@go test -coverprofile=coverage.out ./pkg/...
+	@go tool cover -func=coverage.out
+
+cover-html: 
+	@go test -coverprofile=coverage.out ./pkg/...
+	@go tool cover -html=coverage.out
+
+
+bench:
+	go test -benchtime=1s -count=5 -benchmem -bench . ./pkg/...
+
+pre-build: review test
 	go mod tidy
 
 build: pre-build
@@ -51,7 +65,9 @@ linux: pre-build
 	fyne-cross linux -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 
 windows: pre-build
-	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
+	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output "$(NAME).exe"
+
+build-all: pre-build darwin linux windows
 
 bundle-linux: linux
 	mv fyne-cross/dist/linux-amd64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-amd64.tar.gz

@@ -1,39 +1,27 @@
-// Peer package is contains all the componets related with the network peers.
-//
-// Components:
-//
-// - peerserver -> Registration and peer discovery
-//
 package peer
 
 import (
 	"net"
-	"strings"
-)
-
-const (
-	serviceName   = `_catchmyfile._tcp`
-	serviceDomain = `local.`
 )
 
 // Peer defines a network peer that can send and receive files.
 type Peer struct {
 	// Name is the peers name.
 	Name string
-	// Address - os the net.IP address of the peer.
-	Address net.IP
+	// IPAddress is the net.IP address of the peer.
+	IPAddress net.IP
 	// Port is the network port where the peer will receive connections.
 	Port int
+	// Address is the resolved TCP Address of the peer IP+Port
+	Address net.Addr
 }
 
-// newPeer will create a new instance of the struct Peer and return it.
-//
-// It receives a string with the name of the peer, the ip address and
-// the port where the peer will receive connections for file transfers.
-func newPeer(name string, address net.IP, port int) Peer {
-	return Peer{
-		Name:    strings.Replace(name, `.local.`, ``, 1),
-		Address: address,
-		Port:    port,
+// newPeer will create a new instance of Peer struct and return it.
+func newPeer(name string, ipAddress net.IP, port int, addr net.Addr) *Peer {
+	return &Peer{
+		Name:      name,
+		IPAddress: ipAddress,
+		Port:      port,
+		Address:   addr,
 	}
 }
