@@ -1,5 +1,4 @@
-#VERSION = $(shell git describe --tags --always --dirty --match=v* 2> /dev/null || echo v0)
-VERSION = $(shell git describe --tags --match=v* 2> /dev/null || echo 0.1.0)
+VERSION = $(shell git describe --tags --match=v* 2> /dev/null || echo 0.0.0)
 
 APPID = com.github.fabiodcorreia.catch-my-file
 ICON = assets/icons/icon-512.png
@@ -53,7 +52,7 @@ cover-html:
 bench:
 	go test -benchtime=1s -count=5 -benchmem -bench . ./pkg/...
 
-pre-build: review
+pre-build: review test
 	go mod tidy
 
 build: pre-build
@@ -66,7 +65,9 @@ linux: pre-build
 	fyne-cross linux -arch amd64,arm64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
 
 windows: pre-build
-	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output $(NAME)
+	fyne-cross windows -arch amd64 -app-id $(APPID) -icon $(ICON) -app-version $(VERSION) -output "$(NAME).exe"
+
+build-all: pre-build darwin linux windows
 
 bundle-linux: linux
 	mv fyne-cross/dist/linux-amd64/$(NAME).tar.gz dist/$(NAME)-$(VERSION)-linux-amd64.tar.gz
