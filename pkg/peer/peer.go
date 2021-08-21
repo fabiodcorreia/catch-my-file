@@ -6,14 +6,11 @@ import (
 
 // Peer defines a network peer that can send and receive files.
 type Peer struct {
-	// Name is the peers name.
-	Name string
-	// IPAddress is the net.IP address of the peer.
-	IPAddress net.IP
-	// Port is the network port where the peer will receive connections.
-	Port int
-	// Address is the resolved TCP Address of the peer IP+Port
-	Address net.Addr
+	Name      string   // Name is the peers name.
+	IPAddress net.IP   // IPAddress is the net.IP address of the peer.
+	Port      int      // Port is the network port where the peer will receive connections.
+	Address   net.Addr // Address is the resolved TCP Address of the peer IP+Port.
+	Me        bool     // Me identify the peer as the local peer.
 }
 
 // newPeer will create a new instance of Peer struct and return it.

@@ -70,12 +70,25 @@ func SendTransferReq(ctx context.Context, t *Transfer) (net.Conn, error) {
 //
 // If rejected it will just terminate and update the transfer status. Otherwise
 // it will start sending the file content to the receiver.
-func WaitConfirmation(ctx context.Context, i int, inOut io.ReadWriter, store *TransferStore) error {
+func WaitConfirmation(ctx context.Context, i int, inOut io.ReadWriteCloser, store *TransferStore) error {
+	done := make(chan interface{})
+
+	go func() {
+		select {
+		case <-ctx.Done():
+			if err := inOut.Close(); err != nil {
+				clog.Error(err)
+			}
+		case <-done:
+		}
+	}()
 
 	accept, err := protocol.ReadDecision(inOut)
 	if err != nil {
 		return fmt.Errorf("sender wait confirmation read decision error: %v", err)
 	}
+
+	close(done) // clean the context cancellation goroutine if it wasn't cancelled.
 
 	trans := store.Get(i)
 

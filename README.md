@@ -23,7 +23,7 @@ I wanted a tool that allows to:
 
 ## Installation
 
-- Download the required package from the releases page
+- Download the latest [release](https://github.com/fabiodcorreia/catch-my-file/releases/latest) package
 - Extract the package and run the application
 - MacOS
     - Copy the application to the applications folder or just run it directly
@@ -89,6 +89,10 @@ When the verification is completed with success the transfer will be completed.
 - (Dev) Go >= 1.16 - https://golang.org/
 - (Build) Fyne - https://github.com/fyne-io/fyne
 - (Release) Fyne-Cross - https://github.com/fyne-io/fyne-cross
+
+## Changelog
+
+The changelog can be founda at [CHANGELOG](CHANGELOG.md)
 
 ## License
 

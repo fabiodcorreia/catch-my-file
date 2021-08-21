@@ -24,9 +24,10 @@ type Done chan<- interface{}
 // PeerServer defines the server that registers the peer and discover other peers.
 // It wrappes the logic for zeroconf.
 type PeerServer struct {
-	name  string
-	port  int
-	store *PeerStore
+	name     string
+	port     int
+	store    *PeerStore
+	instance string
 }
 
 // NewServer will create a new peer server instace.
@@ -35,9 +36,10 @@ type PeerServer struct {
 // used for the TCP connections from where the files will be transferred.
 func NewServer(name string, port int, store *PeerStore) *PeerServer {
 	return &PeerServer{
-		name:  name,
-		port:  port,
-		store: store,
+		name:     name,
+		port:     port,
+		store:    store,
+		instance: "catch-" + name,
 	}
 }
 
@@ -50,8 +52,8 @@ func NewServer(name string, port int, store *PeerStore) *PeerServer {
 // registrations, the server listener couldn't start or fail to start
 // the discovery process.
 func (s *PeerServer) Run(ctx context.Context, done Done) error {
-	instance := fmt.Sprintf("catch-%s", s.name)
-	sv, err := zeroconf.Register(instance, serviceName, serviceDomain, s.port, nil, nil)
+
+	sv, err := zeroconf.Register(s.instance, serviceName, serviceDomain, s.port, nil, nil)
 	if err != nil {
 		return fmt.Errorf("peer server run error to register: %v", err)
 	}
@@ -69,7 +71,7 @@ func (s *PeerServer) Run(ctx context.Context, done Done) error {
 	}
 
 	go func(results <-chan *zeroconf.ServiceEntry) {
-		convEntry(results, s.store)
+		convEntry(results, s.store, s.instance)
 		sv.Shutdown()
 		close(done)
 		clog.Info("Peer server is closed")
@@ -80,7 +82,7 @@ func (s *PeerServer) Run(ctx context.Context, done Done) error {
 
 // convEntry will grab each entry received from results channel, convert it
 // into a Peer instance and add it to the store.
-func convEntry(results <-chan *zeroconf.ServiceEntry, store *PeerStore) {
+func convEntry(results <-chan *zeroconf.ServiceEntry, store *PeerStore, instance string) {
 	if results != nil {
 		for entry := range results {
 			name := entry.HostName[:strings.Index(entry.HostName, `.`)]
@@ -96,7 +98,12 @@ func convEntry(results <-chan *zeroconf.ServiceEntry, store *PeerStore) {
 				clog.Error(fmt.Errorf("peer server conving entry error resolving peer address:%v", err))
 				continue
 			}
-			store.Add(newPeer(name, ipAddr, entry.Port, addr))
+			p := newPeer(name, ipAddr, entry.Port, addr)
+			if entry.Instance == instance {
+				p.Me = true
+			}
+			fmt.Println(p)
+			store.Add(p)
 		}
 	}
 }
