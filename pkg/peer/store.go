@@ -37,6 +37,17 @@ func (s *PeerStore) Get(i int) *Peer {
 	return s.data[i]
 }
 
+func (s *PeerStore) GetMe() *Peer {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, p := range s.data {
+		if p.Me {
+			return p
+		}
+	}
+	return nil
+}
+
 // Add will append a peer to the existing list of peers.
 //
 // It returns the index where the peer whas stored.

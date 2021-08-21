@@ -11,14 +11,14 @@ import (
 func Test_convEntry(t *testing.T) {
 	t.Run("entries is nil", func(t *testing.T) {
 
-		convEntry(nil, nil)
+		convEntry(nil, nil, "catch")
 	})
 
 	t.Run("entries send one peer and it get updated on the store", func(t *testing.T) {
 		entries := make(chan *zeroconf.ServiceEntry)
 		store := NewStore()
 
-		go convEntry(entries, store)
+		go convEntry(entries, store, "catch")
 
 		entry := zeroconf.NewServiceEntry("instance", "service", "domain")
 		entry.HostName = "peer-1.lan"
@@ -51,7 +51,7 @@ func Test_convEntry(t *testing.T) {
 		entries := make(chan *zeroconf.ServiceEntry)
 		store := NewStore()
 
-		go convEntry(entries, store)
+		go convEntry(entries, store, "catch")
 
 		entry := zeroconf.NewServiceEntry("instance", "service", "domain")
 		entry.HostName = "peer-1.lan"
@@ -70,7 +70,7 @@ func Test_convEntry(t *testing.T) {
 		entries := make(chan *zeroconf.ServiceEntry)
 		store := NewStore()
 
-		go convEntry(entries, store)
+		go convEntry(entries, store, "catch")
 
 		entry := zeroconf.NewServiceEntry("instance", "service", "domain")
 		entry.HostName = "peer-1.lan"

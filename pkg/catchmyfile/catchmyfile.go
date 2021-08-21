@@ -74,7 +74,7 @@ func (c *CatchMyFileApp) Run() error {
 		t := transfer.NewTransfer(fileName, checksum, peerName, size, addr, transfer.Upload)
 		t.LocalFilePath = filePath
 		i := tStore.Add(t)
-		c.onTransferRequest(i, tStore)
+		c.onTransferRequest(i, tStore, pStore)
 	}
 
 	pDone := make(chan interface{})
@@ -107,11 +107,13 @@ func (c *CatchMyFileApp) Run() error {
 
 // onTransferRequest is the action that is executed everytime
 // a new transfer is added by the user to be sent to a peer.
-func (c *CatchMyFileApp) onTransferRequest(i int, tStore *transfer.TransferStore) {
+func (c *CatchMyFileApp) onTransferRequest(i int, tStore *transfer.TransferStore, pStore *peer.PeerStore) {
 	t := tStore.Get(i)
+	p := pStore.GetMe()
 
 	err := c.wPool.AddTask(func(ctx context.Context) {
 		clog.Info("Added transfer idx:%d to the worker", i)
+		t.SenderName = p.Name
 		conn, err := transfer.SendTransferReq(ctx, t)
 		if err != nil {
 			clog.Error(err)
