@@ -97,7 +97,6 @@ func (c *CatchMyFileApp) Run() error {
 	c.wPool.Run(c.ctx)
 
 	c.w.ShowAndRun()
-
 	<-pDone        // Wait for Peers server to finish
 	<-rDone        // Wait for Receiver server to finish
 	c.wPool.Stop() // Wait for the WorkerPool to finish
