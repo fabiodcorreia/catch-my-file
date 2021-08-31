@@ -24,7 +24,7 @@ type CatchMyFileApp struct {
 	wPool worker.WorkerPool
 }
 
-// New will create a new instance of the appplication.
+// New will create a new instance of the application.
 func New(port int) *CatchMyFileApp {
 	c := &CatchMyFileApp{
 		a:     app.NewWithID("github.fabiodcorreia.catch-my-file"),
